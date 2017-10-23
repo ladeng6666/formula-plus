@@ -1,10 +1,12 @@
-Attribute VB_Name = "公式plus"
+Attribute VB_Name = "公式Plus"
+Public data_title
+
 Function P_ABOUT()
     about_form.Show
     about_form.TextBox1.Locked = True
 End Function
 Function P_HELP()
-    ActiveWorkbook.FollowHyperlink "http://www.ladeng6666.com/wiki/formula-plus"
+    ActiveWorkbook.FollowHyperlink "https://ladeng6666.github.io/wiki/formula-plus"
     P_HELP = "请在打开的网页中查看"
 End Function
 Function P_SUM_MERGE(ByVal sum_area As range, Optional ByVal direction As Integer = 0)
@@ -265,6 +267,12 @@ End Function
 
 Function P_TEXTJOIN(ByVal range, ByVal splitter As String, Optional ignoreBlank As Boolean = False, Optional ignoreRepeat As Boolean = False, Optional actionForMerge As Integer = 0, Optional ByVal columnFirst As Boolean = True)
     Dim r As Long, c As Long, last_c As Long, last_r As Long, txt As String
+    
+    If TypeName(range) = "String" Then
+        P_TEXTJOIN = range
+        Exit Function
+    End If
+    
     Dim usedRange As range
     Set usedRange = ActiveSheet.usedRange
     Set range = Intersect(usedRange, range)
@@ -334,10 +342,38 @@ Function P_TEXTJOIN(ByVal range, ByVal splitter As String, Optional ignoreBlank 
     End If
     P_TEXTJOIN = result
 End Function
-Function P_SPLIT(ByVal txtRange As range, ByVal splitter As String, ByVal get_index As Integer)
-    Dim txt As String
+Function P_SPLIT(ByVal txtRange, ByVal splitter As String, ByVal get_index As Integer, Optional ByVal returnType As Integer = 0)
+    Dim txt As String, p As String, total As Integer
+
     txt = P_TEXTJOIN(txtRange, splitter, 1, 1)
-    P_SPLIT = Split(txt, splitter)(get_index - 1)
+    total = P_COUNTIF(txtRange, splitter)
+    
+    get_index = IIf(get_index < 0, total + get_index + 1, get_index)
+    get_index = IIf(get_index >= total, total, get_index)
+    
+    
+    If returnType = 0 Then
+        p = Split(txt, splitter)(get_index - 1)
+    ElseIf returnType = 1 Then
+        For i = 1 To get_index
+            If p = "" Then
+                p = Split(txt, splitter)(i - 1)
+            Else
+                p = p & splitter & Split(txt, splitter)(i - 1)
+            End If
+        Next
+    ElseIf returnType = -1 Then
+        For i = get_index To total
+            If p = "" Then
+                p = Split(txt, splitter)(i - 1)
+            Else
+                p = p & splitter & Split(txt, splitter)(i - 1)
+            End If
+        Next
+    End If
+    
+    P_SPLIT = p
+    
 End Function
 Function P_SPLIT2(ByVal txtRange As range, ByVal splitter1 As String, ByVal splitter2 As String, ByVal get_index As Integer)
     Dim p As String, reg As String
@@ -360,13 +396,15 @@ Function P_SPLIT2(ByVal txtRange As range, ByVal splitter1 As String, ByVal spli
 exit_split:
 End Function
 
-Function P_COUNTIF(ByVal txtRange As range, ByVal str As String)
+Function P_COUNTIF(ByVal txtRange, ByVal str As String)
     Dim p As String, txt As String
     txt = P_TEXTJOIN(txtRange, "", 1, 1)
     p = P_REG_FIND(txt, str, 2)
     
     P_COUNTIF = p
 End Function
+
+
 
 Function P_SHEETDATA(ByVal sheetIndex As String, ByVal dataCell As range, Optional ByVal offsetr As Long = 0, Optional ByVal keyColumn As range = Nothing)
     
@@ -451,7 +489,7 @@ next_hanzi:
     P_PINYIN = pinyin
 End Function
 
-Public data_title
+
 
 
 Function IFS(ByVal condition, ByVal result, ParamArray vars())
@@ -759,3 +797,19 @@ Function P_RANDOM(rnd_type As Integer)
 End Function
 
 
+Function P_UNIQUE(rng As range, index As Integer)
+    Dim D As Object, cell As range, i As Integer
+    i = 1
+
+    For Each cell In Intersect(rng, ActiveSheet.usedRange)
+        If WorksheetFunction.CountIf(rng, rng.Cells(i)) = 1 Then
+            i = i + 1
+        End If
+        
+        If i >= index Then
+            result = rng.Cells(i)
+            Exit For
+        End If
+    Next
+    P_UNIQUE = result
+End Function
