@@ -141,14 +141,19 @@ Function P_EN(ByVal txt As String, Optional needNum As Integer = 0)
     P_EN = p
 End Function
 Function P_NUM(ByVal txt As String, Optional index_num As Integer = 0)
-    Dim p As String
+    Dim p As String, total As Integer
     p = ""
     
     p = P_REG_REPLACE(txt, "[^0-9\.\d\s\-\\]")
     p = P_REG_REPLACE(p, "(\n)+", Chr(10))
+    total = P_REG_FIND(txt, "([\d\.]+)", 2)
     
     If index_num <> 0 Then
-        p = P_REG_FIND(txt, "(\d+)", 1)(index_num)
+        If index_num > 0 Then
+            p = P_REG_FIND(txt, "([\d\.]+)", 1)(index_num)
+        Else
+            p = P_REG_FIND(txt, "([\d\.]+)", 1)(total + index_num + 1)
+        End If
     End If
     
     P_NUM = p
@@ -348,26 +353,31 @@ Function P_SPLIT(ByVal txtRange, ByVal splitter As String, ByVal get_index As In
     txt = P_TEXTJOIN(txtRange, splitter, 1, 1)
     total = P_COUNTIF(txtRange, splitter)
     
-    get_index = IIf(get_index < 0, total + get_index + 1, get_index)
-    get_index = IIf(get_index >= total, total, get_index)
+    get_index = IIf(get_index < 0, total + get_index + 2, get_index)
+    get_index = IIf(get_index >= total + 1, total + 1, get_index)
     
     
     If returnType = 0 Then
         p = Split(txt, splitter)(get_index - 1)
     ElseIf returnType = 1 Then
-        For i = 1 To get_index
-            If p = "" Then
-                p = Split(txt, splitter)(i - 1)
-            Else
-                p = p & splitter & Split(txt, splitter)(i - 1)
-            End If
-        Next
+        If get_index = total + 1 Then
+            p = txtRange
+        Else
+            For i = 1 To get_index
+                If p = "" Then
+                    p = Split(txt, splitter)(i - 1)
+                Else
+                    p = p & splitter & Split(txt, splitter)(i - 1)
+                End If
+            Next
+        End If
     ElseIf returnType = -1 Then
+
         For i = get_index To total
             If p = "" Then
-                p = Split(txt, splitter)(i - 1)
+                p = Split(txt, splitter)(i)
             Else
-                p = p & splitter & Split(txt, splitter)(i - 1)
+                p = p & splitter & Split(txt, splitter)(i)
             End If
         Next
     End If
